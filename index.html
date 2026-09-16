@@ -249,7 +249,7 @@ function signalHTML(s) {
 
 // ── Fetch ────────────────────────────────────────────────────────────────────
 async function fetchQuery(query) {
-  const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1&date_posted=month&country=fr&language=fr`;
+  const url = `https://jsearch.p.rapidapi.com/search-v2?query=${encodeURIComponent(query)}&num_pages=1&date_posted=month&country=fr&language=fr`;
   const res = await fetch(url, {
     headers: {
       'X-RapidAPI-Key': RAPIDAPI_KEY,
