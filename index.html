@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opex House — Scanner France Comptabilité</title>
+<style>
+  :root {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --border: #E2E5EB;
+    --text: #1A1D23;
+    --text-muted: #6B7280;
+    --accent: #1B4FD8;
+    --accent-light: #EEF2FF;
+    --green: #059669;
+    --green-light: #ECFDF5;
+    --red: #DC2626;
+    --red-light: #FEF2F2;
+    --orange: #D97706;
+    --orange-light: #FFFBEB;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1117;
+      --surface: #1A1D23;
+      --border: #2D3140;
+      --text: #F1F3F7;
+      --text-muted: #9CA3AF;
+      --accent: #4B72F0;
+      --accent-light: #1B2444;
+      --green-light: #052E1C;
+      --red-light: #2D0A0A;
+      --orange-light: #2D1A00;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+  .badge {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  /* Main layout */
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 24px 48px; }
+
+  /* Controls */
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+  }
+  .controls-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+
+  .search-input {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    width: 280px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-outline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { background: var(--bg); }
+
+  .btn-scan {
+    background: #111827;
+    color: white;
+    font-size: 13px;
+    padding: 8px 18px;
+  }
+  .btn-scan:hover { background: #1F2937; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+  .stats-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .stat-chip strong { color: var(--text); font-weight: 600; }
+
+  .selection-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+  .selection-bar.hidden { opacity: 0; pointer-events: none; }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  th:first-child { width: 40px; padding-left: 16px; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    cursor: default;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+  tbody tr.selected { background: var(--accent-light); }
+
+  td {
+    padding: 12px 14px;
+    vertical-align: top;
+  }
+  td:first-child { padding-left: 16px; vertical-align: middle; }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+
+  .company-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .company-location {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .poste-label {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .poste-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .source-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .signal-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-green { background: var(--green); }
+  .dot-orange { background: var(--orange); }
+  .dot-red { background: var(--red); }
+
+  .link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: background 0.1s;
+    white-space: nowrap;
+  }
+  .link-btn:hover { background: var(--accent-light); }
+
+  /* Loading */
+  .loading-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .empty-state h3 { font-size: 15px; margin-bottom: 6px; color: var(--text); }
+
+  /* Export modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    width: 540px;
+    max-width: 90vw;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  }
+  .modal h2 { font-size: 16px; margin-bottom: 4px; }
+  .modal p { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
+  .csv-area {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text);
+    width: 100%;
+    height: 180px;
+    resize: vertical;
+    overflow-y: auto;
+    line-height: 1.6;
+    white-space: pre;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  .tag { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">Opex<span>House</span></div>
+    <div class="badge">Scanner France</div>
+  </div>
+  <button class="btn btn-scan" onclick="lancerScan()">
+    ⟳ Scanner les offres
+  </button>
+</div>
+
+<div class="main">
+
+  <div class="controls">
+    <div class="controls-left">
+      <input type="text" class="search-input" id="searchInput" placeholder="Rechercher cabinet, ville, poste..." oninput="filtrer()">
+      <select id="filtreSource" onchange="filtrer()">
+        <option value="">Toutes sources</option>
+        <option value="Indeed">Indeed</option>
+        <option value="France Travail">France Travail</option>
+        <option value="Cadremploi">Cadremploi</option>
+        <option value="LinkedIn">LinkedIn</option>
+      </select>
+      <select id="filtreSignal" onchange="filtrer()">
+        <option value="">Tous signaux</option>
+        <option value="fort">Signal fort</option>
+        <option value="moyen">Signal moyen</option>
+        <option value="faible">Signal faible</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stats-left">
+      <div class="stat-chip">
+        <strong id="countTotal">0</strong> offres trouvées
+      </div>
+      <div class="stat-chip">
+        Dernière mise à jour : <strong id="lastUpdate">—</strong>
+      </div>
+    </div>
+    <div class="selection-bar hidden" id="selectionBar">
+      <span id="selectionCount">0 sélectionnées</span>
+      <button class="btn btn-primary" onclick="exporterSelection()">
+        ↗ Exporter vers Pré-qualification
+      </button>
+      <button class="btn btn-outline" onclick="toutDeselectionner()">Annuler</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll" onchange="toggleTout(this)"></th>
+          <th>Cabinet</th>
+          <th>Poste recherché</th>
+          <th>Signal</th>
+          <th>Source</th>
+          <th>Date</th>
+          <th>Offre</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <h3>Aucune donnée</h3>
+              <p>Cliquez sur "Scanner les offres" pour lancer la recherche</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Modal export -->
+<div class="modal-overlay" id="modalOverlay" onclick="fermerModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>Export vers Pré-qualification</h2>
+    <p>Copiez ce contenu et collez-le dans l'onglet "Pré-qualification" de votre CRM Excel.</p>
+    <textarea class="csv-area" id="csvArea" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fermerModal()">Fermer</button>
+      <button class="btn btn-primary" onclick="copierCSV()">Copier tout</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Données simulées réalistes ───────────────────────────────────────────────
+const OFFRES_BASE = [
+  { id:1, cabinet:"Cabinet Fidal Expertise", ville:"Paris 8e", poste:"Collaborateur comptable", contrat:"CDI", signal:"fort", source:"Indeed", date:"2026-09-14", lien:"https://fr.indeed.com", domaine:"Expertise comptable" },
+  { id:2, cabinet:"Exco Fiduciaire", ville:"Lyon 2e", poste:"Assistant comptable", contrat:"CDI", signal:"fort", source:"France Travail", date:"2026-09-13", lien:"https://www.francetravail.fr", domaine:"Expertise comptable" },
+  { id:3, cabinet:"BDO France", ville:"Bordeaux", poste:"Collaborateur comptable junior", contrat:"CDI", signal:"fort", source:"Cadremploi", date:"2026-09-12", lien:"https://www.cadremploi.fr", domaine:"Audit & Conseil" },
+  { id:4, cabinet:"Fiducial Expertise", ville:"Toulouse", poste:"Aide-comptable", contrat:"CDD", signal:"moyen", source:"Indeed", date:"2026-09-12", lien:"https://fr.indeed.com", domaine:"Expertise comptable" },
+  { id:5, cabinet:"Grant Thornton", ville:"Paris 17e", poste:"Collaborateur comptable", contrat:"CDI", signal:"fort", source:"LinkedIn", date:"2026-09-11", lien:"https://www.linkedin.com", domaine:"Audit & Conseil" },
+  { id:6, cabinet:"In Extenso", ville:"Nantes", poste:"Assistant comptable H/F", contrat:"CDI", signal:"fort", source:"France Travail", date:"2026-09-11", lien:"https://www.francetravail.fr", domaine:"Expertise comptable" },
+  { id:7, cabinet:"Mazars", ville:"Paris 15e", poste:"Collaborateur comptable confirmé", contrat:"CDI", signal:"fort", source:"Cadremploi", date:"2026-09-10", lien:"https://www.cadremploi.fr", domaine:"Audit & Conseil" },
+  { id:8, cabinet:"Cerfrance Île-de-France", ville:"Paris 12e", poste:"Comptable agricole", contrat:"CDI", signal:"moyen", source:"Indeed", date:"2026-09-10", lien:"https://fr.indeed.com", domaine:"Expertise comptable" },
+  { id:9, cabinet:"RSM France", ville:"Paris 9e", poste:"Collaborateur comptable junior", contrat:"CDI", signal:"fort", source:"LinkedIn", date:"2026-09-09", lien:"https://www.linkedin.com", domaine:"Expertise comptable" },
+  { id:10, cabinet:"Advolis Orfis", ville:"Marseille", poste:"Collaborateur comptable", contrat:"CDI", signal:"fort", source:"France Travail", date:"2026-09-09", lien:"https://www.francetravail.fr", domaine:"Expertise comptable" },
+  { id:11, cabinet:"Deloitte France", ville:"Paris 8e", poste:"Assistant comptable", contrat:"Stage", signal:"faible", source:"Indeed", date:"2026-09-08", lien:"https://fr.indeed.com", domaine:"Big Four" },
+  { id:12, cabinet:"Sofiral", ville:"Rennes", poste:"Collaborateur comptable", contrat:"CDI", signal:"fort", source:"Cadremploi", date:"2026-09-08", lien:"https://www.cadremploi.fr", domaine:"Expertise comptable" },
+  { id:13, cabinet:"Audit & Finance Conseil", ville:"Strasbourg", poste:"Aide-comptable", contrat:"CDI", signal:"moyen", source:"France Travail", date:"2026-09-07", lien:"https://www.francetravail.fr", domaine:"Expertise comptable" },
+  { id:14, cabinet:"Legi Comptabilité", ville:"Lille", poste:"Collaborateur comptable junior", contrat:"CDI", signal:"fort", source:"Indeed", date:"2026-09-07", lien:"https://fr.indeed.com", domaine:"Expertise comptable" },
+  { id:15, cabinet:"Nexia France", ville:"Paris 16e", poste:"Collaborateur comptable senior", contrat:"CDI", signal:"moyen", source:"LinkedIn", date:"2026-09-06", lien:"https://www.linkedin.com", domaine:"Audit & Conseil" },
+  { id:16, cabinet:"Orcom", ville:"Dijon", poste:"Assistant comptable", contrat:"CDI", signal:"fort", source:"France Travail", date:"2026-09-05", lien:"https://www.francetravail.fr", domaine:"Expertise comptable" },
+  { id:17, cabinet:"Expertise & Gestion", ville:"Nice", poste:"Collaborateur comptable", contrat:"CDI", signal:"fort", source:"Cadremploi", date:"2026-09-05", lien:"https://www.cadremploi.fr", domaine:"Expertise comptable" },
+  { id:18, cabinet:"Fidexpert", ville:"Montpellier", poste:"Aide-comptable temps partiel", contrat:"CDI", signal:"faible", source:"Indeed", date:"2026-09-04", lien:"https://fr.indeed.com", domaine:"Expertise comptable" },
+];
+
+let offresAffichees = [];
+let selection = new Set();
+let scanFait = false;
+
+// ─── Signal ─────────────────────────────────────────────────────────────────
+function signalHTML(s) {
+  const cfg = {
+    fort:   { cls:"dot-green",  label:"Signal fort",  color:"var(--green)" },
+    moyen:  { cls:"dot-orange", label:"Signal moyen", color:"var(--orange)" },
+    faible: { cls:"dot-red",    label:"Signal faible",color:"var(--red)" },
+  };
+  const c = cfg[s];
+  return `<span class="signal-dot"><span class="dot ${c.cls}"></span><span style="color:${c.color}">${c.label}</span></span>`;
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function renderTable(data) {
+  const tbody = document.getElementById('tbody');
+  if (!scanFait) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><h3>Aucune donnée</h3><p>Cliquez sur "Scanner les offres" pour lancer la recherche</p></div></td></tr>`;
+    return;
+  }
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><h3>Aucun résultat</h3><p>Modifiez vos filtres</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(o => `
+    <tr class="${selection.has(o.id) ? 'selected' : ''}" data-id="${o.id}">
+      <td><input type="checkbox" ${selection.has(o.id) ? 'checked' : ''} onchange="toggleLigne(${o.id}, this)"></td>
+      <td>
+        <div class="company-name">${o.cabinet}</div>
+        <div class="company-location">📍 ${o.ville}</div>
+      </td>
+      <td>
+        <div class="poste-label">${o.poste}</div>
+        <div class="poste-meta">${o.contrat} · ${o.domaine}</div>
+      </td>
+      <td>${signalHTML(o.signal)}</td>
+      <td><span class="source-badge">${o.source}</span></td>
+      <td style="color:var(--text-muted);font-size:12px">${o.date}</td>
+      <td><a class="link-btn" href="${o.lien}" target="_blank">Voir ↗</a></td>
+    </tr>
+  `).join('');
+  document.getElementById('countTotal').textContent = data.length;
+}
+
+// ─── Scan ────────────────────────────────────────────────────────────────────
+function lancerScan() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = `<tr><td colspan="7"><div class="loading-state"><div class="spinner"></div><p>Interrogation de Indeed · France Travail · Cadremploi · LinkedIn…</p></div></td></tr>`;
+  setTimeout(() => {
+    scanFait = true;
+    offresAffichees = [...OFFRES_BASE];
+    selection.clear();
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = now.toLocaleDateString('fr-FR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+    filtrer();
+    majSelectionBar();
+  }, 1800);
+}
+
+// ─── Filtres ─────────────────────────────────────────────────────────────────
+function filtrer() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const src = document.getElementById('filtreSource').value;
+  const sig = document.getElementById('filtreSignal').value;
+  const filtrees = OFFRES_BASE.filter(o => {
+    const matchQ = !q || o.cabinet.toLowerCase().includes(q) || o.ville.toLowerCase().includes(q) || o.poste.toLowerCase().includes(q);
+    const matchSrc = !src || o.source === src;
+    const matchSig = !sig || o.signal === sig;
+    return matchQ && matchSrc && matchSig;
+  });
+  offresAffichees = filtrees;
+  if(scanFait) renderTable(filtrees);
+}
+
+// ─── Sélection ───────────────────────────────────────────────────────────────
+function toggleLigne(id, cb) {
+  if (cb.checked) selection.add(id);
+  else selection.delete(id);
+  const row = cb.closest('tr');
+  row.classList.toggle('selected', cb.checked);
+  majSelectionBar();
+  majSelectAll();
+}
+
+function toggleTout(cb) {
+  offresAffichees.forEach(o => {
+    if (cb.checked) selection.add(o.id);
+    else selection.delete(o.id);
+  });
+  renderTable(offresAffichees);
+  majSelectionBar();
+}
+
+function toutDeselectionner() {
+  selection.clear();
+  document.getElementById('selectAll').checked = false;
+  renderTable(offresAffichees);
+  majSelectionBar();
+}
+
+function majSelectionBar() {
+  const bar = document.getElementById('selectionBar');
+  const n = selection.size;
+  if (n > 0) {
+    bar.classList.remove('hidden');
+    document.getElementById('selectionCount').textContent = `${n} sélectionnée${n>1?'s':''}`;
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function majSelectAll() {
+  const cb = document.getElementById('selectAll');
+  if (offresAffichees.length === 0) { cb.checked = false; cb.indeterminate = false; return; }
+  const n = offresAffichees.filter(o => selection.has(o.id)).length;
+  cb.checked = n === offresAffichees.length;
+  cb.indeterminate = n > 0 && n < offresAffichees.length;
+}
+
+// ─── Export ──────────────────────────────────────────────────────────────────
+function exporterSelection() {
+  const selOffres = OFFRES_BASE.filter(o => selection.has(o.id));
+  const header = "Entreprise\tPoste\tVille\tContrat\tSource\tDate\tLien\tDomaine\tStatut";
+  const lignes = selOffres.map(o =>
+    `${o.cabinet}\t${o.poste}\t${o.ville}\t${o.contrat}\t${o.source}\t${o.date}\t${o.lien}\t${o.domaine}\tNouveau`
+  );
+  document.getElementById('csvArea').value = [header, ...lignes].join('\n');
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fermerModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function copierCSV() {
+  const area = document.getElementById('csvArea');
+  navigator.clipboard.writeText(area.value).then(() => {
+    const btn = document.querySelector('.modal-actions .btn-primary');
+    btn.textContent = '✓ Copié !';
+    setTimeout(() => btn.textContent = 'Copier tout', 2000);
+  });
+}
+
+// Init
+document.getElementById('countTotal').textContent = '0';
+</script>
+</body>
+</html>
