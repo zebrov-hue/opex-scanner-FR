@@ -181,11 +181,11 @@ const RAPIDAPI_KEY = "5dda3681c5mshe59f206550f94bcp1434b0jsn70f9c5b72fec";
 
 // ── Requêtes : mots-clés × villes ────────────────────────────────────────────
 const MOTS_CLES = [
-  "assistant comptable cabinet expertise comptable",
-  "collaborateur comptable cabinet France",
-  "aide comptable tenue livres cabinet",
-  "commis comptable rapprochement bancaire France",
-  "comptable saisie TVA paie cabinet"
+  "comptable cabinet France",
+  "assistant comptable France",
+  "collaborateur comptable France",
+  "accountant accounting firm France",
+  "bookkeeper France cabinet"
 ];
 const VILLES = ["Paris","Lyon","Bordeaux","Toulouse","Marseille","Lille","Nantes","Strasbourg","Rennes","Nice"];
 
@@ -262,7 +262,7 @@ function signalHTML(s) {
 
 // ── Fetch ────────────────────────────────────────────────────────────────────
 async function fetchQuery(query) {
-  const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1&date_posted=week`;
+  const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1&date_posted=month`;
   const res = await fetch(url, {
     headers: {
       'X-RapidAPI-Key': RAPIDAPI_KEY,
